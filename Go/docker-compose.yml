@@ -2,14 +2,20 @@ version: "3.3"
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: api.Dockerfile
     ports:
       - 9090:9090
     environment:
       PORT: 9090
-      REDIS_URL: redis:6379
+      REDIS_URL: redis
+      POSTGRES_URL: postgres
 
   redis:
     image: redis:alpine
-    ports:
-      - 6379:6379
+
+  postgres:
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
