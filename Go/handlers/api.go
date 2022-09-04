@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -21,12 +20,11 @@ func (a *API) handle(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	code := r.URL.Query().Get("codes")
-	log.Println("I'm Handler code is: ", code, reflect.TypeOf(code))
 
 	val, err := a.cache.Get(r.Context(), code).Result()
 	// cache fault
 	if err != nil {
-		log.Println("cache fault")
+		log.Println("cache miss")
 		data, gerr := a.getData(code, r)
 		if gerr != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -43,11 +41,11 @@ func (a *API) handle(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	} else { // cache hit
+	} else {
+		// cache hit
 		log.Println("cache hit")
 		var exchangeRate []ExchangeRate
 		if err := json.Unmarshal([]byte(val), &exchangeRate); err != nil {
-			log.Println("ERROR:", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
@@ -88,12 +86,10 @@ func (a *API) getData(code string, r *http.Request) (ExchangeRate, error) {
 
 	var exchangeRate []ExchangeRate
 	if err := json.Unmarshal(body, &exchangeRate); err != nil {
-		log.Println("ERROR:", err)
 		return result, err
 	}
 
 	if err != nil {
-		log.Println("Set Cache Error")
 		return result, nil
 	}
 
